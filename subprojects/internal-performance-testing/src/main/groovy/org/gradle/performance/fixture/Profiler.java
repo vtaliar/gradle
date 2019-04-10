@@ -35,7 +35,11 @@ public abstract class Profiler {
 
     public abstract List<String> getAdditionalJvmOpts(BuildExperimentSpec spec);
 
+    public abstract List<String> getAdditionalJvmOpts(boolean startRecordingImmediately, File jfrOutputLocation);
+
     public abstract List<String> getAdditionalGradleArgs(BuildExperimentSpec spec);
+
+    public abstract File getJfrRecordingsLocation(String name);
 
     public abstract void start(BuildExperimentSpec spec);
 

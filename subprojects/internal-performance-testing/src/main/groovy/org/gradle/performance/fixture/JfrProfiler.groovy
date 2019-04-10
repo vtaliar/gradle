@@ -59,11 +59,16 @@ class JfrProfiler extends Profiler implements Stoppable {
 
     @Override
     List<String> getAdditionalJvmOpts(BuildExperimentSpec spec) {
-        String flightRecordOptions = "stackdepth=1024"
-        def jfrFile = getJfrFile(spec)
+        def jfrFile = getJfrFile(spec.displayName)
         jfrFile.parentFile.mkdirs()
-        if (!useDaemon(spec)) {
-            flightRecordOptions += ",defaultrecording=true,dumponexit=true,dumponexitpath=${jfrFile},settings=$config"
+        getAdditionalJvmOpts(!useDaemon(spec), jfrFile)
+    }
+
+    @Override
+    List<String> getAdditionalJvmOpts(boolean startRecordingImmediately, File jfrOutputLocation) {
+        String flightRecordOptions = "stackdepth=1024"
+        if (startRecordingImmediately) {
+            flightRecordOptions += ",defaultrecording=true,dumponexit=true,dumponexitpath=${jfrOutputLocation},settings=$config"
         }
         def opts = []
         if (!JavaVersion.current().isJava11Compatible()) {
@@ -78,8 +83,13 @@ class JfrProfiler extends Profiler implements Stoppable {
         pid.gradleArgs
     }
 
-    private File getJfrFile(BuildExperimentSpec spec) {
-        def fileSafeName = spec.displayName.replaceAll('[^a-zA-Z0-9.-]', '-').replaceAll('-+', '-')
+    @Override
+    File getJfrRecordingsLocation(String name) {
+        return new File(logDirectory, name)
+    }
+
+    private File getJfrFile(String jfrRecordingDirectory) {
+        def fileSafeName = jfrRecordingDirectory.replaceAll('[^a-zA-Z0-9.-]', '-').replaceAll('-+', '-')
         def baseDir = new File(logDirectory, fileSafeName)
         new File(baseDir, "profile.jfr")
     }
@@ -91,7 +101,7 @@ class JfrProfiler extends Profiler implements Stoppable {
     }
 
     void stop(BuildExperimentSpec spec) {
-        def jfrFile = getJfrFile(spec)
+        def jfrFile = getJfrFile(spec.displayName)
         if (useDaemon(spec)) {
             jCmd.execute(pid.pid, "JFR.stop", "name=profile", "filename=${jfrFile}")
         }
@@ -103,7 +113,7 @@ class JfrProfiler extends Profiler implements Stoppable {
         flameGraphGenerator.generateDifferentialGraphs(logDirectory)
     }
 
-    private boolean useDaemon(BuildExperimentSpec spec) {
+    private static boolean useDaemon(BuildExperimentSpec spec) {
         spec.displayInfo.daemon
     }
 }

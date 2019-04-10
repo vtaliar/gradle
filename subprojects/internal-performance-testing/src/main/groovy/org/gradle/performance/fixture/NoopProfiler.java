@@ -16,6 +16,7 @@
 
 package org.gradle.performance.fixture;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
@@ -28,6 +29,16 @@ class NoopProfiler extends Profiler {
     @Override
     public List<String> getAdditionalGradleArgs(BuildExperimentSpec spec) {
         return Collections.emptyList();
+    }
+
+    @Override
+    public List<String> getAdditionalJvmOpts(boolean startRecordingImmediately, File jfrOutputLocation) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public File getJfrRecordingsLocation(String name) {
+        return null;
     }
 
     @Override
